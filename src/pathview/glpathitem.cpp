@@ -544,13 +544,13 @@ void GLPathItem::processArcFeed(const Preview &preview)
 #endif
 
     Position newPosition;
-    QVector3D currentVector;
+    QVector3D oldVector;
     QVector3D newVector;
-    QVector2D startPoint;
-    QVector2D endPoint;
-    QVector2D centerPoint;
-    QVector2D startVector;
-    QVector2D endVector;
+    QVector3D startPoint;
+    QVector3D endPoint;
+    QVector3D centerPoint;
+    QVector3D startVector;
+    QVector3D endVector;
     float startAngle;
     float endAngle;
     float helixOffset;
@@ -558,62 +558,71 @@ void GLPathItem::processArcFeed(const Preview &preview)
     float radius;
     ArcPathItem *arcPathItem;
 
-    currentVector = positionToVector3D(m_currentPosition);
+
+    int iX = 0;
+    int iY = 0;
+    int iZ = 0;
+
+    //double x1 = preview.first_end();
+    //double y1 = preview.second_end();
+    //double cx = preview.first_axis();
+    //double cy = preview.second_axis();
+    //double z1 = preview.axis_end_point();
+
+    oldVector = positionToVector3D(m_currentPosition);
     newPosition = calculateNewPosition(preview.pos());
+    newVector = positionToVector3D(newPosition);
 
     if (m_activePlane == XYPlane)
     {
+        iX = 0;
+        iY = 0;
+        iZ = 0;
         arcPathItem = new ArcPathItem();
-        newPosition.x = static_cast<float>(preview.first_end());
-        newPosition.y = static_cast<float>(preview.second_end());
-        newPosition.z = static_cast<float>(preview.axis_end_point());
-        newVector = positionToVector3D(newPosition);
-
-        startPoint.setX(currentVector.x());
-        startPoint.setY(currentVector.y());
-
-        helixOffset = newVector.z() - currentVector.z();
     }
     else if (m_activePlane == YZPlane)
     {
+        iX = 1;
+        iY = 2;
+        iZ = 0;
         arcPathItem = new ArcPathItem();
-        newPosition.y = static_cast<float>(preview.first_end());
-        newPosition.z = static_cast<float>(preview.second_end());
-        newPosition.x = static_cast<float>(preview.axis_end_point());
-        newVector = positionToVector3D(newPosition);
-
-        startPoint.setX(currentVector.y());
-        startPoint.setY(currentVector.z());
-
-        helixOffset = newVector.x() - currentVector.x();
     }
     else if (m_activePlane == XZPlane)
     {
+        iX = 2;
+        iY = 0;
+        iZ = 1;
+        // Note: it looks like the X and Z axes come inverted from preview
         arcPathItem = new ArcPathItem();
-        newPosition.x = static_cast<float>(preview.first_end());
-        newPosition.z = static_cast<float>(preview.second_end());
-        newPosition.y = static_cast<float>(preview.axis_end_point());
-        newVector = positionToVector3D(newPosition);
-
-        startPoint.setX(currentVector.x());
-        startPoint.setY(currentVector.z());
-
-        helixOffset = newVector.y() - currentVector.y();
     }
     else
     {
         return; // not supported
     }
 
-    endPoint.setX(static_cast<float>(preview.first_end()));
-    endPoint.setY(static_cast<float>(preview.second_end()));
-    centerPoint.setX(static_cast<float>(preview.first_axis()));
-    centerPoint.setY(static_cast<float>(preview.second_axis()));
-    startVector = startPoint - centerPoint;
-    endVector = endPoint - centerPoint;
+    startPoint[iX] = oldVector.x();
+    startPoint[iY] = oldVector.y();
+    startPoint[iZ] = oldVector.z();
+    endPoint[iX] = newVector.x();
+    endPoint[iY] = newVector.y();
+    endPoint[iZ] = newVector.z();
+    helixOffset = startPoint.z() - endPoint.z();
 
-    startAngle = std::atan2(startVector.y(), startVector.x());
-    endAngle = std::atan2(endVector.y(), endVector.x());
+    QVector3D offset;
+    offset[0] = static_cast<float>(preview.pos().x()) - newPosition.x;
+    offset[1] = static_cast<float>(preview.pos().y()) - newPosition.y;
+    offset[2] = static_cast<float>(preview.pos().z()) - newPosition.z;
+    float cx = static_cast<float>(preview.first_axis()) + offset[iX];
+    float cy = static_cast<float>(preview.second_axis()) + offset[iY];
+    centerPoint[iZ] = startPoint[iZ];
+    centerPoint[iX] = cx;
+    centerPoint[iY] = cy;
+
+    //startVector = startPoint - centerPoint;
+    //endVector = endPoint - centerPoint;
+
+    startAngle = std::atan2(oldVector[iY] - cy, oldVector[iX] - cx);
+    endAngle = std::atan2(newVector[iY] - cy, newVector[iX] - cx);
     anticlockwise = preview.rotation() >= 0;
     if (anticlockwise) {
         startAngle += 2.0f * PI_F * (std::fabs(static_cast<float>(preview.rotation())) - 1.0f);  // for rotation > 1 increase the endAngle
@@ -621,6 +630,36 @@ void GLPathItem::processArcFeed(const Preview &preview)
     else {
         endAngle -= 2.0f * PI_F * (std::fabs(static_cast<float>(preview.rotation())) - 1.0f);  // for rotation > 1 decrease the startAngle
     }
+
+#if 0
+    //startVector = startPoint - centerPoint;
+    //endVector = endPoint - centerPoint;
+
+    startAngle = std::atan2(oldVector[iY] - cy, oldVector[iX] - cx);
+    endAngle = std::atan2(newVector[iY] - cy, newVector[iX] - cx);
+    const float CIRCLE_FUZZ = 1e-9f;
+    anticlockwise = preview.rotation() >= 0;
+    if (anticlockwise) {
+        while ((startAngle - endAngle) < CIRCLE_FUZZ) {
+            endAngle += 2.0f * PI_F;
+        }
+
+    }
+    else {
+        while ((endAngle - startAngle) > -CIRCLE_FUZZ) {
+            endAngle -= 2.0f * PI_F;
+        }
+        endAngle -= 2.0f * PI_F * (std::fabs(static_cast<float>(preview.rotation())) - 1.0f);  // for rotation > 1 decrease the startAngle
+    }
+
+    // if multi-turn, add the right number of full circles
+    if (preview.rotation() < -1) {
+        endAngle += 2.0f * PI_F * (static_cast<float>(preview.rotation()) + 1.0f);
+    }
+    if (preview.rotation() > 1) {
+        endAngle += 2.0f * PI_F * (static_cast<float>(preview.rotation()) - 1.0f);
+    }
+#endif
 
     radius = centerPoint.distanceToPoint(startPoint);
 
@@ -650,74 +689,74 @@ void GLPathItem::processArcFeed(const Preview &preview)
         if (point1) {
             updateExtents(QVector3D(centerPoint.x() + radius,
                                     centerPoint.y(),
-                                    currentVector.z()));
+                                    oldVector.z()));
         }
         if (point2) {
             updateExtents(QVector3D(centerPoint.x(),
                                     centerPoint.y() + radius,
-                                    currentVector.z()));
+                                    oldVector.z()));
         }
         if (point3) {
             updateExtents(QVector3D(centerPoint.x() - radius,
                                     centerPoint.y(),
-                                    currentVector.z()));
+                                    oldVector.z()));
         }
         if (point4) {
             updateExtents(QVector3D(centerPoint.x(),
                                     centerPoint.y() - radius,
-                                    currentVector.z()));
+                                    oldVector.z()));
         }
     }
     else if (m_activePlane == XZPlane)  // centerPoint: X is X, Y is Z
     {
         if (point1) {
             updateExtents(QVector3D(centerPoint.x() + radius,
-                                    currentVector.y(),
+                                    oldVector.y(),
                                     centerPoint.y()));
         }
         if (point2) {
             updateExtents(QVector3D(centerPoint.x(),
-                                    currentVector.y(),
+                                    oldVector.y(),
                                     centerPoint.y() + radius));
         }
         if (point3) {
             updateExtents(QVector3D(centerPoint.x() - radius,
-                                    currentVector.y(),
+                                    oldVector.y(),
                                     centerPoint.y()));
         }
         if (point4) {
             updateExtents(QVector3D(centerPoint.x(),
-                                    currentVector.y(),
+                                    oldVector.y(),
                                     centerPoint.y() - radius));
         }
     }
     else if (m_activePlane == YZPlane)  // centerPoint: X is Y, Y is Z
     {
         if (point1) {
-            updateExtents(QVector3D(currentVector.x(),
+            updateExtents(QVector3D(oldVector.x(),
                                     centerPoint.x() + radius,
                                     centerPoint.y()));
         }
         if (point2) {
-            updateExtents(QVector3D(currentVector.x(),
+            updateExtents(QVector3D(oldVector.x(),
                                     centerPoint.x(),
                                     centerPoint.y() + radius));
         }
         if (point3) {
-            updateExtents(QVector3D(currentVector.x(),
+            updateExtents(QVector3D(oldVector.x(),
                                     centerPoint.x() - radius,
                                     centerPoint.y()));
         }
         if (point4) {
-            updateExtents(QVector3D(currentVector.x(),
+            updateExtents(QVector3D(oldVector.x(),
                                     centerPoint.x(),
                                     centerPoint.y() - radius));
         }
     }
 
-    arcPathItem->position = currentVector;
+    arcPathItem->position = oldVector;
     arcPathItem->rotationPlane = m_activePlane;
-    arcPathItem->center = (centerPoint - startPoint);
+    arcPathItem->center = centerPoint.toVector2D() - startPoint.toVector2D();
     arcPathItem->radius = radius;
     arcPathItem->helixOffset = helixOffset;
     arcPathItem->startAngle = startAngle;
