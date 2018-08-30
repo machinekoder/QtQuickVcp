@@ -46,21 +46,35 @@ export QT_QPA_PLATFORM_PLUGIN_PATH="/qt5/plugins/platforms"
 export QT_TRANSLATIONS_PATH="/qt5/translations"
 export QT_INSTALL_PREFIX="/qt5"
 
+export ARCH="x86_64"
+export QML_SOURCES_PATHS="${PWD}/src ${PWD}/apps"
+export LINUXDEPLOY_BIN=/linuxdeploy/squashfs-root/usr/bin/linuxdeploy
+export LINUXDEPLOY_PLUGIN_QT_BIN=/linuxdeploy/squashfs-root/usr/bin/linuxdeploy-plugin-qt
+export APP_NAME="machinekit-client"
+
+#sudo chmod -R a+rw ${QT_INSTALL_PREFIX}
+
+find /linuxdeploy
+ls -l ${LINUXDEPLOY_BIN}
+${LINUXDEPLOY_BIN} --help
+
+
 mkdir -p build.release
 cd build.release
+export APP_DIR=${PWD}/AppDir
 
-qmake -r ..
+qmake QMLPLUGINDUMP=0 CONFIG+=release PREFIX=/usr -r ..
 make -j$((`nproc` + 1))
 # make docs
-sudo make install
+INSTALL_ROOT=${APP_DIR} make install VERBOSE=1
 # make install_docs
 
 # compress QtQuick module
 zipfile="QtQuickVcp.tar.gz"
 mkdir qml
 mkdir lib
-cp -r ${QML_IMPORT_PATH}/Machinekit qml/Machinekit
-cp ${QT_INSTALL_PREFIX}/lib/libmachinetalk* lib/
+cp -r ${APP_DIR}/${QML_IMPORT_PATH}/Machinekit qml/Machinekit
+cp ${APP_DIR}/${QT_INSTALL_PREFIX}/lib/libmachinetalk* lib/
 tar -zcf $zipfile qml lib translations
 # allow access to archive from outside the chroot
 chmod a+rwx $zipfile
@@ -69,35 +83,29 @@ ls -lh $zipfile
 rm -r qml
 rm -r lib
 
-# create binary zip file
-qt-deploy ../build/deployment-scripts/linux_x64.ini --deploy
 
-# prepare AppDir
-cd MachinekitClient.AppDir
-cp -r ../translations .
-cp ${QT_TRANSLATIONS_PATH}/*_de.qm translations/
-cp ${QT_TRANSLATIONS_PATH}/*_ru.qm translations/
-cp /usr/share/pixmaps/machinekit.png .
-cp /usr/share/applications/machinekit-client.desktop .
-mv machinekit-client AppRun
-cd ..
+export QML_MODULES_PATHS=${APP_DIR}/${QML_IMPORT_PATH}
+export LD_LIBRARY_PATH="${APP_DIR}/${QT_INSTALL_PREFIX}/lib:$LD_LIBRARY_PATH"
+echo "Building AppImage for ${APP_NAME}"
+${LINUXDEPLOY_BIN} --app-name ${APP_NAME} --appdir ${APP_DIR} --init-appdir
+${LINUXDEPLOY_PLUGIN_QT_BIN} --appdir ${APP_DIR}
+${LINUXDEPLOY_BIN} --app-name ${APP_NAME} --appdir ${APP_DIR} --output appimage
 
 # prepare variables
-appdir=${PWD}/MachinekitClient.AppDir/
-appimage=${PWD}/MachinekitClient.AppImage
+appimage=( ${PWD}/MachinekitClient*.AppImage )
+
+# cp ${QT_TRANSLATIONS_PATH}/*_de.qm translations/
+# cp ${QT_TRANSLATIONS_PATH}/*_ru.qm translations/
 
 # back to home folder
 cd ../
 
 # cleanup plugins.qmltypes files here, since they have been created with sudo
-sudo chown -R `whoami` ./build.release
+#sudo chown -R `whoami` ./build.release
 
 ##########################################################################
 # PACKAGE INTO APPIMAGE WITH APPIMAGEKIT
 ##########################################################################
-
-cd /AppImageKit/AppImageAssistant.AppDir
-./package  "$appdir" "$appimage"
 
 # allow access to AppImage from outside the chroot
 chmod a+rwx "$appimage"

@@ -1,22 +1,14 @@
 [Desktop Entry]
-Categories=Qt;Utility; # TODO
+Categories=Qt;Utility;
 Comment[en_US]=Machinekit remote UI client based on QtQuickVcp
 Comment=Machinekit remote UI client based on QtQuickVcp
-Encoding=UTF-8
 Exec=machinekit-client
 GenericName[en_US]=Machinekit Remote User Interfaces
 GenericName=Machinekit Remote User Interfaces
 Icon=machinekit
-MimeType=
 Name[en_US]=MachinekitClient
 Name=MachinekitClient
-Path=
 StartupNotify=true
 Terminal=false
-TerminalOptions=
 Type=Application
 Version=1.0
-X-DBUS-ServiceName=
-X-DBUS-StartupType=
-X-KDE-SubstituteUID=false
-X-KDE-Username=

@@ -66,12 +66,12 @@ TRANSLATIONS_OUT_PATH = $$PWD/MachinekitClient.$${NAME}/translations
 include(translation.pri)
 
 linux: !android: {
-target.path = /usr/bin
+target.path = $$PREFIX/bin
 
-desktop.path = /usr/share/applications
+desktop.path = $$PREFIX/share/applications
 desktop.files = misc/machinekit-client.desktop
 
-icon.path = /usr/share/pixmaps
+icon.path = $$PREFIX/share/icons/hicolor/512x512/apps
 icon.files = icons/machinekit.png
 
 INSTALLS += target desktop icon
