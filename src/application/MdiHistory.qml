@@ -23,7 +23,7 @@
 import QtQuick 2.0
 import Machinekit.Application 1.0
 
-QtObject {
+Item {
     property var settings: {"initialized": false}
     property var model: []
     property bool _ready: settings.initialized

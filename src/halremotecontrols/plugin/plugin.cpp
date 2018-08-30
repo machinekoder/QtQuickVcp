@@ -98,8 +98,6 @@ QString MachinekitHalRemoteControlsPlugin::fileLocation() const
 bool MachinekitHalRemoteControlsPlugin::isLoadedFromResource() const
 {
     // If one file is missing, it will load all the files from the resource
-    QFile file(baseUrl().toLocalFile() + "/HalApplicationWindow.qml");
-    if (!file.exists())
-        return true;
-    return false;
+    QFile file(baseUrl().toLocalFile() + "/" + qmldir[0].type + ".qml");
+    return !file.exists();
 }

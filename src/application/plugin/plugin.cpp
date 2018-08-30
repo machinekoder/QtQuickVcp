@@ -95,8 +95,8 @@ void MachinekitApplicationPlugin::registerTypes(const char *uri)
     qmlRegisterType<qtquickvcp::ApplicationFileSyncHandler>(uri, 1, 0, "ApplicationFileSyncHandler");
 
     const QString filesLocation = fileLocation();
-    for (int i = 0; i < int(sizeof(qmldir)/sizeof(qmldir[0])); i++) {
-        qmlRegisterType(QUrl(filesLocation + "/" + qmldir[i].type + ".qml"), uri, qmldir[i].major, qmldir[i].minor, qmldir[i].type);
+    for (auto i : qmldir) {
+        qmlRegisterType(QUrl(filesLocation + "/" + i.type + ".qml"), uri, i.major, i.minor, i.type);
     }
 }
 
@@ -118,10 +118,6 @@ QString MachinekitApplicationPlugin::fileLocation() const
 bool MachinekitApplicationPlugin::isLoadedFromResource() const
 {
     // If one file is missing, it will load all the files from the resource
-    QFile file(baseUrl().toLocalFile() + "/ApplicationCore.qml");
-    if (!file.exists())
-        return true;
-    return false;
+    QFile file(baseUrl().toLocalFile() + "/" + qmldir[0].type + ".qml");
+    return !file.exists();
 }
-
-

@@ -8,5 +8,6 @@
         <file>HomeAllAxesHelper.qml</file>
         <file>ApplicationHelper.qml</file>
         <file>QueuedConnection.qml</file>
+        <file>MdiHistory.qml</file>
     </qresource>
 </RCC>
