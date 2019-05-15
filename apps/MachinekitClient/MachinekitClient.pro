@@ -54,6 +54,10 @@ macx: {
     QMAKE_POST_LINK += $$QMAKE_COPY $$ICON $${TARGET}.app/Contents/Resources/machinekit.icns
 }
 
+#wasm: {
+#    LIBS += -L$$[QT_INSTALL_QML]/Machinekit/Controls -lmachinekitcontrolsplugin
+#}
+
 OTHER_FILES += \
     android/AndroidManifest.xml \
     Info.plist \

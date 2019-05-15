@@ -25,12 +25,10 @@
 
 #include <QObject>
 #include <QJsonArray>
-#include <machinetalk/protobuf/message.pb.h>
-#include <application/commandbase.h>
 
 namespace qtquickvcp {
 
-class ApplicationCommand : public machinetalk::application::CommandBase
+class ApplicationCommand : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(bool connected READ isConnected NOTIFY connectedChanged)
@@ -62,24 +60,24 @@ public:
     Q_ENUM(SpindleMode)
 
     enum TaskState {
-        TaskStateEstop = machinetalk::EMC_TASK_STATE_ESTOP,
-        TaskStateEstopReset = machinetalk::EMC_TASK_STATE_ESTOP_RESET,
-        TaskStateOff = machinetalk::EMC_TASK_STATE_OFF,
-        TaskStateOn = machinetalk::EMC_TASK_STATE_ON
+        TaskStateEstop,
+        TaskStateEstopReset,
+        TaskStateOff,
+        TaskStateOn
     };
     Q_ENUM(TaskState)
 
     enum TaskMode {
-        TaskModeManual = machinetalk::EMC_TASK_MODE_MANUAL,
-        TaskModeAuto = machinetalk::EMC_TASK_MODE_AUTO,
-        TaskModeMdi = machinetalk::EMC_TASK_MODE_MDI
+        TaskModeManual,
+        TaskModeAuto,
+        TaskModeMdi
     };
     Q_ENUM(TaskMode)
 
     enum TrajectoryMode {
-        FreeMode = machinetalk::EMC_TRAJ_MODE_FREE,
-        CoordinatedMode = machinetalk::EMC_TRAJ_MODE_COORD,
-        TeleopMode = machinetalk::EMC_TRAJ_MODE_TELEOP
+        FreeMode,
+        CoordinatedMode,
+        TeleopMode
     };
     Q_ENUM(TrajectoryMode)
 
@@ -136,14 +134,9 @@ public slots:
 private:
     bool m_connected;
 
-    // more efficient to reuse a protobuf Message
-    machinetalk::Container   m_tx;
-
 private slots:
     void setConnected();
     void clearConnected();
-    void handleEmccmdExecutedMessage(const machinetalk::Container &rx);
-    void handleEmccmdCompletedMessage(const machinetalk::Container &rx);
 
 signals:
     void connectedChanged(bool arg);

@@ -25,7 +25,6 @@
 
 #include <QObject>
 #include <QVariant>
-#include <machinetalk/protobuf/message.pb.h>
 
 namespace qtquickvcp {
 
@@ -43,10 +42,10 @@ public:
     explicit HalSignal(QObject *parent = 0);
 
     enum ValueType {
-        Bit = machinetalk::HAL_BIT,
-        Float = machinetalk::HAL_FLOAT,
-        S32 = machinetalk::HAL_S32,
-        U32 = machinetalk::HAL_U32
+        Bit,
+        Float,
+        S32,
+        U32
     };
     Q_ENUM(ValueType)
 

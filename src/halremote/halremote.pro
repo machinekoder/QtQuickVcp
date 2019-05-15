@@ -4,8 +4,6 @@ QT += qml quick network
 uri = Machinekit.HalRemote
 include(../plugin.pri)
 
-include(../zeromq.pri)
-include(../../3rdparty/machinetalk-protobuf-qt/machinetalk-protobuf-lib.pri)
 include(../common/common.pri)
 include(../machinetalk/machinetalk.pri)
 

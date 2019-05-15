@@ -25,7 +25,6 @@
 #include <QObject>
 #include <QVariant>
 #include <QQueue>
-#include <machinetalk/protobuf/message.pb.h>
 
 namespace qtquickvcp {
 
@@ -44,17 +43,17 @@ public:
     explicit HalPin(QObject *parent = 0);
 
     enum HalPinType {
-        Bit = machinetalk::HAL_BIT,
-        Float = machinetalk::HAL_FLOAT,
-        S32 = machinetalk::HAL_S32,
-        U32 = machinetalk::HAL_U32
+        Bit,
+        Float,
+        S32,
+        U32
     };
     Q_ENUM(HalPinType)
 
     enum HalPinDirection {
-      In = machinetalk::HAL_IN,
-      Out = machinetalk::HAL_OUT,
-      IO = machinetalk::HAL_IO
+      In,
+      Out,
+      IO
     };
     Q_ENUM(HalPinDirection)
 

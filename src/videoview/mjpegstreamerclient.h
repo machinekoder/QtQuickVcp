@@ -26,8 +26,6 @@
 #include <QTime>
 #include <QQueue>
 #include <QImage>
-#include <nzmqt/nzmqt.hpp>
-#include "package.pb.h"
 
 namespace qtquickvcp {
 
@@ -120,9 +118,6 @@ private:
     QImage      m_frameImg;
     QTimer     *m_framerateTimer;
     QTimer     *m_streamBufferTimer;
-    nzmqt::ZMQContext *m_context;
-    nzmqt::ZMQSocket *m_updateSocket;
-    pb::Package m_rx; // more efficient to reuse a protobuf Message
 
 
     QString m_videoUri;
@@ -140,8 +135,6 @@ private slots:
     void disconnectSocket();
     void updateMessageReceived(const QList<QByteArray> &messageList);
 
-    void updateFramerate();
-    void updateStreamBuffer();
     void updateStreamBufferItem();
 }; // class MjpegStreamerClient
 } // namespace qtquickvcp

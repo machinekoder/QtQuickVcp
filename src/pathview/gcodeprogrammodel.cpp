@@ -24,8 +24,6 @@
 #include <QDebug>
 #include <QDir>
 
-using namespace machinetalk;
-
 namespace qtquickvcp {
 
 GCodeProgramModel::GCodeProgramModel(QObject *parent) :
@@ -223,14 +221,6 @@ void GCodeProgramModel::addLine(const QString &fileName)
     }
 
     m_fileIndices.insert(fileName, fileIndex);
-}
-
-void GCodeProgramModel::addPreviewItem(const QModelIndex &index, const Preview &previewItem)
-{
-    PreviewItem item;
-    item.modelIndex = index;
-    item.previewItem = previewItem;
-    m_previewItems.append(item);
 }
 
 QVariant GCodeProgramModel::data(const QString &fileName, int lineNumber, int role) const

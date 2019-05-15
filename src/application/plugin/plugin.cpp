@@ -66,10 +66,6 @@ void MachinekitApplicationPlugin::registerTypes(const char *uri)
 {
     initResources();
 
-    // Verify that the version of the library that we linked against is
-    // compatible with the version of the headers we compiled against.
-    GOOGLE_PROTOBUF_VERIFY_VERSION;
-
     // @uri Machinekit.Application
     Q_ASSERT(uri == QLatin1String("Machinekit.Application"));
     qmlRegisterType<qtquickvcp::ApplicationConfig>(uri, 1, 0, "ApplicationConfig");

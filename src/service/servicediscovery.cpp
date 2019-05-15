@@ -235,9 +235,6 @@ ServiceDiscovery::ServiceDiscovery(QObject *parent) :
     m_unicastLookupInterval(5000),
     m_unicastErrorThreshold(2),
     m_filter(new ServiceDiscoveryFilter(this)),
-    m_networkSession(nullptr),
-    m_networkConfigManager(nullptr),
-    m_networkConfigTimer(new QTimer(this)),
     m_jdns(nullptr)
 {
     m_unicastLookupTimer.setInterval(m_unicastLookupInterval);
@@ -288,16 +285,6 @@ int ServiceDiscovery::unicastLookupInterval() const
 
 void ServiceDiscovery::initializeNetworkSession()
 {
-    // now begin the process of opening the network link
-    m_networkConfigManager = new QNetworkConfigurationManager(this);
-    connect(m_networkConfigManager, &QNetworkConfigurationManager::updateCompleted,
-            this, &ServiceDiscovery::networkConfigUpdateCompleted);
-    m_networkConfigManager->updateConfigurations();
-
-    m_networkConfigTimer->setInterval(3000);
-    connect(m_networkConfigTimer, &QTimer::timeout,
-            m_networkConfigManager, &QNetworkConfigurationManager::updateConfigurations);
-    m_networkConfigTimer->start(); // update the connections cyclically
 }
 
 bool ServiceDiscovery::initializeMdns()
@@ -425,12 +412,6 @@ void ServiceDiscovery::networkSessionClosed()
 
     m_networkReady = false;                     // network no ready anymore
     emit networkReadyChanged(m_networkReady);
-}
-
-void ServiceDiscovery::networkSessionError(QNetworkSession::SessionError error)
-{
-    Q_UNUSED(error)
-    WARNING_TAG(1, "SD", "network session error:" << error << m_networkSession->errorString());
 }
 
 void ServiceDiscovery::unicastLookup()
@@ -1172,58 +1153,10 @@ bool ServiceDiscovery::networkConfigIsQualified(const QNetworkConfiguration &con
 
 void ServiceDiscovery::openNetworkSession()
 {
-    DEBUG_TAG(3, "SD", "trying to open network session");
-
-    // use the default network configuration and make sure that the link is open
-    QList<QNetworkConfiguration> availableConfigs;
-    QNetworkConfiguration defaultConfig = m_networkConfigManager->defaultConfiguration();
-
-    if (defaultConfig.isValid()) {
-        availableConfigs.append(defaultConfig);
-    }
-    availableConfigs.append(m_networkConfigManager->allConfigurations(QNetworkConfiguration::Discovered));
-
-    DEBUG_TAG(2, "SD", "number of configs: " << availableConfigs.size());
-
-    for (const QNetworkConfiguration &config: availableConfigs)
-    {
-        if (networkConfigIsQualified(config))
-        {
-            DEBUG_TAG(2, "SD", "network config: " << config.bearerTypeName() << config.bearerTypeFamily() << config.name());
-
-            if (!m_networkSession.isNull())
-            {
-                m_networkSession->deleteLater();
-            }
-
-            m_networkSession = new QNetworkSession(config, this);
-
-            connect(m_networkSession, &QNetworkSession::opened,
-                    this, &ServiceDiscovery::networkSessionOpened);
-            connect(m_networkSession, &QNetworkSession::closed,
-                    this, &ServiceDiscovery::networkSessionClosed);
-            connect(m_networkSession, static_cast<void (QNetworkSession::*)(QNetworkSession::SessionError)>(&QNetworkSession::error),
-                    this, &ServiceDiscovery::networkSessionError);
-
-            m_networkSession->open();
-
-            return;
-        }
-        else
-        {
-            DEBUG_TAG(2, "SD", "unsupported network config: " << config.bearerTypeName() << config.bearerTypeFamily() << config.name());
-        }
-    }
 }
 
 void ServiceDiscovery::networkConfigUpdateCompleted()
 {
-    if ((m_networkSession.isNull())
-            || (!m_networkSession->isOpen())
-            || (!m_networkReady))
-    {
-        openNetworkSession();
-    }
 }
 
 } // namespace qtquickvcp

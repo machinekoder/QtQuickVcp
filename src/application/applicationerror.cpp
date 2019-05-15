@@ -21,76 +21,20 @@
 ****************************************************************************/
 
 #include "applicationerror.h"
-#include <google/protobuf/text_format.h>
 #include "debughelper.h"
 
-using namespace machinetalk;
 
 namespace qtquickvcp {
 
 ApplicationError::ApplicationError(QObject *parent) :
-    application::ErrorBase(parent),
+    QObject(parent),
     m_connected(false),
     m_channels(ErrorChannel | TextChannel | DisplayChannel)
 {
 }
 
-void ApplicationError::errorMessageReceived(const Container &rx)
-{
-    for (const std::string &note: rx.note())
-    {
-        emit messageReceived(static_cast<ErrorType>(rx.type()), QString::fromStdString(note));
-    }
-}
-
-void ApplicationError::handleEmcNmlErrorMessage(const QByteArray &topic, const Container &rx)
-{
-    Q_UNUSED(topic);
-    errorMessageReceived(rx);
-}
-
-void ApplicationError::handleEmcNmlTextMessage(const QByteArray &topic, const Container &rx)
-{
-    Q_UNUSED(topic);
-    errorMessageReceived(rx);
-}
-
-void ApplicationError::handleEmcNmlDisplayMessage(const QByteArray &topic, const Container &rx)
-{
-    Q_UNUSED(topic);
-    errorMessageReceived(rx);
-}
-
-void ApplicationError::handleEmcOperatorTextMessage(const QByteArray &topic, const Container &rx)
-{
-    Q_UNUSED(topic);
-    errorMessageReceived(rx);
-}
-
-void ApplicationError::handleEmcOperatorErrorMessage(const QByteArray &topic, const Container &rx)
-{
-    Q_UNUSED(topic);
-    errorMessageReceived(rx);
-}
-
-void ApplicationError::handleEmcOperatorDisplayMessage(const QByteArray &topic, const Container &rx)
-{
-    Q_UNUSED(topic);
-    errorMessageReceived(rx);
-}
-
 void ApplicationError::updateTopics()
 {
-    clearErrorTopics();
-    if (m_channels & ErrorChannel) {
-        addErrorTopic("error");
-    }
-    if (m_channels & TextChannel) {
-        addErrorTopic("text");
-    }
-    if (m_channels & DisplayChannel) {
-        addErrorTopic("display");
-    }
 }
 
 void ApplicationError::setConnected()

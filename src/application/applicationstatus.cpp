@@ -22,16 +22,13 @@
 
 #include "applicationstatus.h"
 #include <QtQml>
-#include <google/protobuf/text_format.h>
 #include <machinetalkservice.h>
 #include "debughelper.h"
-
-using namespace machinetalk;
 
 namespace qtquickvcp {
 
 ApplicationStatus::ApplicationStatus(QObject *parent) :
-    application::StatusBase(parent),
+    QObject(parent),
     m_config(new QObject(this)),
     m_motion(new QObject(this)),
     m_io(new QObject(this)),
@@ -48,13 +45,6 @@ ApplicationStatus::ApplicationStatus(QObject *parent) :
             this, &ApplicationStatus::updateRunning);
     connect(this, &ApplicationStatus::interpChanged,
             this, &ApplicationStatus::updateRunning);
-
-    m_channelMap.insert("motion", MotionChannel);
-    m_channelMap.insert("config", ConfigChannel);
-    m_channelMap.insert("io", IoChannel);
-    m_channelMap.insert("task", TaskChannel);
-    m_channelMap.insert("interp", InterpChannel);
-    m_channelMap.insert("ui", UiChannel);
 }
 
 void ApplicationStatus::componentComplete()
@@ -65,8 +55,6 @@ void ApplicationStatus::componentComplete()
     initializeObject(TaskChannel);
     initializeObject(InterpChannel);
     initializeObject(UiChannel);
-
-    StatusBase::componentComplete();
 }
 
 void ApplicationStatus::updateSync(ApplicationStatus::StatusChannel channel)
@@ -80,59 +68,6 @@ void ApplicationStatus::updateSync(ApplicationStatus::StatusChannel channel)
                 (!(m_channels & InterpChannel) || (m_syncedChannels & InterpChannel)) &&
                 (!(m_channels & UiChannel) || (m_syncedChannels & UiChannel))
                 );
-
-    if (flagsMatch && !m_synced) {
-        channelsSynced();
-    }
-}
-
-void ApplicationStatus::updateMotionObject(const EmcStatusMotion &motion)
-{
-    MachinetalkService::recurseMessage(motion, m_motion);
-    emit motionChanged();
-}
-
-void ApplicationStatus::updateConfigObject(const EmcStatusConfig &config)
-{
-    MachinetalkService::recurseMessage(config, m_config);
-    emit configChanged();
-}
-
-void ApplicationStatus::updateIoObject(const EmcStatusIo &io)
-{
-    MachinetalkService::recurseMessage(io, m_io);
-    emit ioChanged();
-}
-
-void ApplicationStatus::updateTaskObject(const EmcStatusTask &task)
-{
-    MachinetalkService::recurseMessage(task, m_task);
-    emit taskChanged();
-}
-
-void ApplicationStatus::updateInterpObject(const EmcStatusInterp &interp)
-{
-    MachinetalkService::recurseMessage(interp, m_interp);
-    emit interpChanged();
-}
-
-void ApplicationStatus::updateUiObject(const EmcStatusUI &ui)
-{
-    MachinetalkService::recurseMessage(ui, m_ui);
-    emit uiChanged();
-}
-
-void ApplicationStatus::handleEmcstatFullUpdateMessage(const QByteArray &topic, const Container &rx)
-{
-    StatusChannel channel = m_channelMap.value(topic, NoChannel);
-    emcstatUpdateReceived(channel, rx);
-    updateSync(channel);
-}
-
-void ApplicationStatus::handleEmcstatIncrementalUpdateMessage(const QByteArray &topic, const Container &rx)
-{
-    StatusChannel channel = m_channelMap.value(topic, NoChannel);
-    emcstatUpdateReceived(channel, rx);
 }
 
 void ApplicationStatus::syncStatus()
@@ -150,58 +85,8 @@ void ApplicationStatus::unsyncStatus()
 
 void ApplicationStatus::updateTopics()
 {
-    clearStatusTopics();
-    if ((m_channels | m_optionalChannels) & MotionChannel) {
-        addStatusTopic("motion");
-        initializeObject(MotionChannel);
-    }
-    if ((m_channels | m_optionalChannels) & ConfigChannel) {
-        addStatusTopic("config");
-        initializeObject(ConfigChannel);
-    }
-    if ((m_channels | m_optionalChannels) & TaskChannel) {
-        addStatusTopic("task");
-        initializeObject(TaskChannel);
-    }
-    if ((m_channels | m_optionalChannels) & IoChannel) {
-        addStatusTopic("io");
-        initializeObject(IoChannel);
-    }
-    if ((m_channels | m_optionalChannels) & InterpChannel) {
-        addStatusTopic("interp");
-        initializeObject(InterpChannel);
-    }
-    if ((m_channels | m_optionalChannels) & UiChannel) {
-        addStatusTopic("ui");
-        initializeObject(UiChannel);
-    }
 }
 
-void ApplicationStatus::emcstatUpdateReceived(StatusChannel channel, const Container &rx)
-{
-    switch (channel) {
-    case MotionChannel:
-        updateMotionObject(rx.emc_status_motion());
-        break;
-    case ConfigChannel:
-        updateConfigObject(rx.emc_status_config());
-        break;
-    case IoChannel:
-        updateIoObject(rx.emc_status_io());
-        break;
-    case TaskChannel:
-        updateTaskObject(rx.emc_status_task());
-        break;
-    case InterpChannel:
-        updateInterpObject(rx.emc_status_interp());
-        break;
-    case UiChannel:
-        updateUiObject(rx.emc_status_ui());
-        break;
-    case NoChannel:
-        break;
-    }
-}
 
 void ApplicationStatus::updateRunning()
 {
@@ -221,40 +106,5 @@ void ApplicationStatus::updateRunning()
 
 void ApplicationStatus::initializeObject(ApplicationStatus::StatusChannel channel)
 {
-    switch (channel)
-    {
-    case MotionChannel:
-        //m_motion->deleteLater();
-        m_motion = MachinetalkService::recurseDescriptor(EmcStatusMotion::descriptor(), m_motion);
-        emit motionChanged();
-        break;
-    case ConfigChannel:
-        //m_config->deleteLater();
-        m_config = MachinetalkService::recurseDescriptor(EmcStatusConfig::descriptor(), m_config);
-        emit configChanged();
-        break;
-    case IoChannel:
-        //m_io->deleteLater();
-        m_io = MachinetalkService::recurseDescriptor(EmcStatusIo::descriptor(), m_io);
-        emit ioChanged();
-        break;
-    case TaskChannel:
-        //m_task->deleteLater();
-        m_task = MachinetalkService::recurseDescriptor(EmcStatusTask::descriptor(), m_task);
-        emit taskChanged();
-        break;
-    case InterpChannel:
-        //m_interp->deleteLater();
-        m_interp = MachinetalkService::recurseDescriptor(EmcStatusInterp::descriptor(), m_interp);
-        emit interpChanged();
-        break;
-    case UiChannel:
-        //m_ui->deleteLater();
-        m_ui = MachinetalkService::recurseDescriptor(EmcStatusUI::descriptor(), m_ui);
-        emit uiChanged();
-        break;
-    case NoChannel:
-        break;
-    }
 }
 } // namespace qtquickvcp

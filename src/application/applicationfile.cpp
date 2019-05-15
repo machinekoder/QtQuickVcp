@@ -88,13 +88,6 @@ ApplicationFile::ApplicationFile(QObject *parent) :
     m_model = new ApplicationFileModel(this);
 
     m_networkManager = new QNetworkAccessManager(this);
-    connect(m_networkManager, &QNetworkAccessManager::networkAccessibleChanged,
-            this, &ApplicationFile::networkAccessibleChanged);
-
-    if (m_networkManager->networkAccessible() == QNetworkAccessManager::Accessible)
-    {
-        initializeFtp();
-    }
 }
 
 ApplicationFile::~ApplicationFile()
@@ -388,18 +381,6 @@ void ApplicationFile::transferProgress(qint64 bytesSent, qint64 bytesTotal)
 {
     m_progress = static_cast<double>(bytesSent) / static_cast<double>(bytesTotal);
     emit progressChanged(m_progress);
-}
-
-void ApplicationFile::networkAccessibleChanged(QNetworkAccessManager::NetworkAccessibility accesible)
-{
-    if (accesible == QNetworkAccessManager::Accessible)
-    {
-        initializeFtp();
-    }
-    else
-    {
-        cleanupFtp();
-    }
 }
 
 void ApplicationFile::addToList(const QUrlInfo &urlInfo)

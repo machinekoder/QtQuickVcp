@@ -24,56 +24,91 @@
 #define APPLICATIONLOG_H
 
 #include <QObject>
-#include <machinetalk/protobuf/message.pb.h>
-#include <application/logbase.h>
 
 namespace qtquickvcp {
 
 class ApplicationLogMessage;
 
-class ApplicationLog : public machinetalk::application::LogBase
+class ApplicationLog : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(bool connected READ isConnected NOTIFY connectedChanged)
     Q_PROPERTY(LogLevel logLevel READ logLevel WRITE setLogLevel NOTIFY logLevelChanged)
+    Q_PROPERTY(QString logUri READ logUri WRITE setLogUri NOTIFY logUriChanged)
+    Q_PROPERTY(bool ready READ ready WRITE setReady NOTIFY readyChanged)
 
 public:
     ApplicationLog(QObject *parent = nullptr);
 
     enum LogLevel {
-        None = machinetalk::RTAPI_MSG_NONE,
-        Error = machinetalk::RTAPI_MSG_ERR,
-        Warning = machinetalk::RTAPI_MSG_WARN,
-        Info = machinetalk::RTAPI_MSG_INFO,
-        Debug = machinetalk::RTAPI_MSG_DBG,
-        All = machinetalk::RTAPI_MSG_ALL
+        None,
+        Error,
+        Warning,
+        Info,
+        Debug,
+        All
     };
     Q_ENUM(LogLevel)
 
     enum LogOrigin {
-        Kernel = machinetalk::MSG_KERNEL,
-        RtUser = machinetalk::MSG_RTUSER,
-        Ulapi = machinetalk::MSG_ULAPI
+        Kernel,
+        RtUser,
+        Ulapi
     };
     Q_ENUM(LogOrigin)
 
     bool isConnected() const;
     LogLevel logLevel() const;
 
+    bool ready() const
+    {
+        return m_ready;
+    }
+
+    QString logUri() const
+    {
+        return m_logUri;
+    }
+
 public slots:
     void setLogLevel(LogLevel logLevel);
+
+    void setReady(bool ready)
+    {
+        if (m_ready == ready)
+            return;
+
+        m_ready = ready;
+        emit readyChanged(m_ready);
+    }
+
+    void setLogUri(QString logUri)
+    {
+        if (m_logUri == logUri)
+            return;
+
+        m_logUri = logUri;
+        emit logUriChanged(m_logUri);
+    }
 
 signals:
     void connectedChanged(bool connected);
     void logLevelChanged(LogLevel logLevel);
     void messageReceived(const QJsonObject &message);
 
+    void readyChanged(bool ready);
+
+    void logUriChanged(QString logUri);
+
 private:
     bool m_connected;
     LogLevel m_logLevel;
 
+    bool m_ready;
+
+    QString m_logUri;
+
 private slots:
-    void handleLogMessageMessage(const QByteArray &topic, const machinetalk::Container &rx);
     void updateTopics();
     void setConnected();
     void clearConnected();

@@ -25,7 +25,6 @@
 #include <QObject>
 #include <QUrl>
 #include <QStringList>
-#include <machinetalk/protobuf/config.pb.h>
 
 namespace qtquickvcp {
 
@@ -46,9 +45,9 @@ public:
     explicit ApplicationConfigItem(QObject *parent = 0);
 
     enum ApplicationType {
-        Qt5QmlApplication = machinetalk::QT5_QML,
-        GladeVcpApplication = machinetalk::GLADEVCP,
-        JavaScriptApplication = machinetalk::JAVASCRIPT
+        Qt5QmlApplication,
+        GladeVcpApplication,
+        JavaScriptApplication
     };
     Q_ENUM(ApplicationType)
 

@@ -25,13 +25,11 @@
 
 #include <QObject>
 #include <QQmlListProperty>
-#include <machinetalk/protobuf/message.pb.h>
-#include <halremote/remotecomponentbase.h>
 #include "halpin.h"
 
 namespace qtquickvcp {
 
-class HalRemoteComponent : public machinetalk::halremote::RemoteComponentBase
+class HalRemoteComponent : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QString name READ name WRITE setName NOTIFY nameChanged)
@@ -94,9 +92,6 @@ public:
 public slots:
     void setName(QString name)
     {
-        if (this->state() != State::Down) {
-            return;
-        }
 
         if (m_name != name) {
             m_name = name;
@@ -150,7 +145,6 @@ private:
     bool            m_bind;
 
     // more efficient to reuse a protobuf Message
-    machinetalk::Container          m_tx;
     QMap<QString, HalPin*> m_pinsByName;
     QHash<int, HalPin*>    m_pinsByHandle;
     QList<HalPin*>         m_pins;
@@ -159,17 +153,11 @@ private:
     void bindPins();
     static QString splitPinFromHalName(const QString &name);
 
-    void pinUpdate(const machinetalk::Pin &remotePin, HalPin *localPin);
-    HalPin *addLocalPin(const machinetalk::Pin &remotePin);
-
     // RemoteComponentBase interface
 private slots:
     void addPins();
     void removePins();
     void unsyncPins();
-    void handleHalrcompFullUpdateMessage(const QByteArray &topic, const machinetalk::Container &rx);
-    void handleHalrcompIncrementalUpdateMessage(const QByteArray &topic, const machinetalk::Container &rx);
-    void handleHalrcompErrorMessage(const QByteArray &topic, const machinetalk::Container &rx);
     void bindComponent();
     void setConnected();
     void setError();

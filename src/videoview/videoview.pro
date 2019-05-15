@@ -4,13 +4,6 @@ QT += qml quick network
 uri = Machinekit.VideoView
 include(../plugin.pri)
 
-include(../zeromq.pri)
-
-# Protobuf
-PROTOPATH += $$PWD/proto
-PROTOS += proto/package.proto
-include(../protobuf.pri)
-
 # Input
 SOURCES += \
     plugin/plugin.cpp \

@@ -110,8 +110,6 @@ private:
     QList<ServiceList*> m_serviceLists;
     QList<NameServer*> m_nameServers;
 
-    QPointer<QNetworkSession> m_networkSession;
-    QPointer<QNetworkConfigurationManager> m_networkConfigManager;
     QPointer<QTimer> m_networkConfigTimer; // Timer for refreshing the network status
 
     QPointer<QJDns> m_jdns;
@@ -155,7 +153,6 @@ private slots:
     void deinitializeMdns(bool cleanup);
     void networkSessionOpened();
     void networkSessionClosed();
-    void networkSessionError(QNetworkSession::SessionError error);
     void unicastLookup();
 }; // class ServiceDiscovery
 } // namespace qtquickvcp

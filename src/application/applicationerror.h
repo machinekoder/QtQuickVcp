@@ -23,12 +23,10 @@
 #define APPLICATIONERROR_H
 
 #include <QObject>
-#include <machinetalk/protobuf/message.pb.h>
-#include <application/errorbase.h>
 
 namespace qtquickvcp {
 
-class ApplicationError : public machinetalk::application::ErrorBase
+class ApplicationError : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(bool connected READ isConnected NOTIFY connectedChanged)
@@ -39,12 +37,12 @@ public:
     explicit ApplicationError(QObject *parent = 0);
 
     enum ErrorType {
-        NmlError = machinetalk::MT_EMC_NML_ERROR,
-        NmlText = machinetalk::MT_EMC_NML_TEXT,
-        NmlDisplay = machinetalk::MT_EMC_NML_DISPLAY,
-        OperatorError = machinetalk::MT_EMC_OPERATOR_ERROR,
-        OperatorText = machinetalk::MT_EMC_OPERATOR_TEXT,
-        OperatorDisplay = machinetalk::MT_EMC_OPERATOR_DISPLAY
+        NmlError,
+        NmlText,
+        NmlDisplay,
+        OperatorError,
+        OperatorText,
+        OperatorDisplay
     };
     Q_ENUM(ErrorType)
 
@@ -81,15 +79,8 @@ private:
     bool            m_connected;
     ErrorChannels   m_channels;
 
-    void errorMessageReceived(const machinetalk::Container &rx);
 
 private slots:
-    void handleEmcNmlErrorMessage(const QByteArray &topic, const machinetalk::Container &rx);
-    void handleEmcNmlTextMessage(const QByteArray &topic, const machinetalk::Container &rx);
-    void handleEmcNmlDisplayMessage(const QByteArray &topic, const machinetalk::Container &rx);
-    void handleEmcOperatorTextMessage(const QByteArray &topic, const machinetalk::Container &rx);
-    void handleEmcOperatorErrorMessage(const QByteArray &topic, const machinetalk::Container &rx);
-    void handleEmcOperatorDisplayMessage(const QByteArray &topic, const machinetalk::Container &rx);
     void updateTopics();
     void setConnected();
     void clearConnected();

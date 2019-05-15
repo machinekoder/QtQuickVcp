@@ -24,13 +24,11 @@
 #define PREVIEWCLIENT_H
 
 #include <QObject>
-#include <machinetalk/protobuf/message.pb.h>
-#include <pathview/previewclientbase.h>
 #include "gcodeprogrammodel.h"
 
 namespace qtquickvcp {
 
-class PreviewClient : public machinetalk::pathview::PreviewClientBase
+class PreviewClient : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(bool connected READ isConnected NOTIFY connectedChanged)
@@ -42,19 +40,19 @@ public:
     explicit PreviewClient(QObject *parent = 0);
 
     enum InterpreterState {
-        InterpreterIdle = machinetalk::INTERP_IDLE,
-        InterpreterRunning = machinetalk::INTERP_RUNNING,
-        InterpreterPaused = machinetalk::INTERP_PAUSED,
-        InterpreterQueueWait = machinetalk::INTERP_QUEUE_WAIT,
-        InterpreterSyncWait = machinetalk::INTERP_SYNC_WAIT,
-        InterpreterAbortWait = machinetalk::INTERP_ABORT_WAIT,
-        InterpreterStateUnset = machinetalk::INTERP_STATE_UNSET
+        InterpreterIdle,
+        InterpreterRunning,
+        InterpreterPaused,
+        InterpreterQueueWait,
+        InterpreterSyncWait,
+        InterpreterAbortWait,
+        InterpreterStateUnset
     };
 
     enum CanonUnits {
-        CanonUnitsInch = machinetalk::CANON_UNITS_INCH,
-        CanonUnitsMm = machinetalk::CANON_UNITS_MM,
-        CanonUnitsCm = machinetalk::CANON_UNITS_CM
+        CanonUnitsInch,
+        CanonUnitsMm,
+        CanonUnitsCm
     };
 
     GCodeProgramModel * model() const
@@ -100,8 +98,6 @@ private:
     PreviewStatus m_previewStatus;
     bool m_previewUpdated;
 
-    void handlePreviewMessage(const QByteArray &topic, const machinetalk::Container &rx);
-    void handleInterpStatMessage(const QByteArray &topic, const machinetalk::Container &rx);
     void setConnected();
     void clearConnected();
 

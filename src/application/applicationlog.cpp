@@ -25,12 +25,10 @@
 #include <QDateTime>
 #include <QJsonObject>
 
-using namespace machinetalk;
-
 namespace qtquickvcp {
 
 ApplicationLog::ApplicationLog(QObject *parent)
-    : application::LogBase(parent)
+    : QObject(parent)
     , m_connected(false)
     , m_logLevel(Warning)
 {
@@ -57,30 +55,8 @@ void ApplicationLog::setLogLevel(LogLevel logLevel)
     emit logLevelChanged(m_logLevel);
 }
 
-
-void ApplicationLog::handleLogMessageMessage(const QByteArray &topic, const Container &rx)
-{
-    Q_UNUSED(topic)
-
-    const auto &logMessage = rx.log_message();
-    if (static_cast<int>(logMessage.level()) <= static_cast<int>(m_logLevel)) {
-        ApplicationLogMessage log;
-        log.setLevel(static_cast<LogLevel>(logMessage.level()));
-        log.setOrigin(static_cast<LogOrigin>(logMessage.origin()));
-        log.setPid(logMessage.pid());
-        log.setTag(QString::fromStdString(logMessage.tag()));
-        log.setText(QString::fromStdString(logMessage.text()));
-        qint64 msecs = static_cast<qint64>(rx.tv_sec()) * 1000L;
-        msecs += static_cast<qint64>(rx.tv_nsec()) / 1000000L;
-        log.setTimestamp(QDateTime::fromMSecsSinceEpoch(msecs));
-        emit messageReceived(log.toJsonObject());
-     }
-}
-
 void ApplicationLog::updateTopics()
 {
-    clearLogTopics();
-    addLogTopic("log");
 }
 
 void ApplicationLog::setConnected()

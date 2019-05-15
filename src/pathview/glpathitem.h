@@ -25,7 +25,6 @@
 
 #include "glitem.h"
 #include "gcodeprogrammodel.h"
-#include <machinetalk/protobuf/preview.pb.h>
 
 namespace qtquickvcp {
 
@@ -198,7 +197,6 @@ private:
     int m_arcDivision;
 
     Offsets m_activeOffsets;
-    machinetalk::Position m_relativePosition; // current relative position (without offsets)
     Position m_currentPosition;  // current absolute position (with offsets)
     Plane m_activePlane;
     QList<PathItem*> m_previewPathItems;
@@ -220,15 +218,6 @@ private:
     void resetExtents();
     void updateExtents(const QVector3D &vector);
     void releaseExtents();
-    void processPreview(const machinetalk::Preview &preview);
-    void processStraightMove(const machinetalk::Preview &preview, MovementType movementType);
-    void processArcFeed(const machinetalk::Preview &preview);
-    void processSetG5xOffset(const machinetalk::Preview &preview);
-    void processSetG92Offset(const machinetalk::Preview &preview);
-    void processUseToolOffset(const machinetalk::Preview &preview);
-    void processSelectPlane(const machinetalk::Preview &preview);
-    Position previewPositionToPosition(const machinetalk::Position &position) const;
-    Position calculateNewPosition(const machinetalk::Position &newPosition) const;
     QVector3D positionToVector3D(const Position &position) const;
 
 private slots:

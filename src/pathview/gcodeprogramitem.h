@@ -24,7 +24,6 @@
 #define GCODEPROGRAMITEM_H
 #include <QVariant>
 #include <QList>
-#include <machinetalk/protobuf/preview.pb.h>
 
 namespace qtquickvcp {
 

@@ -68,7 +68,6 @@ QJsonObject ApplicationLogMessage::toJsonObject() const
     object[QStringLiteral("pid")] = m_pid;
     object[QStringLiteral("tag")] = m_tag;
     object[QStringLiteral("text")] = m_text;
-    object[QStringLiteral("timestamp")] = QJsonValue::fromVariant(m_timestamp);
     return object;
 }
 

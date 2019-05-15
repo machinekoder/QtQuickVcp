@@ -25,9 +25,6 @@
 #include <QTimer>
 #include <QNetworkReply>
 #include <QElapsedTimer>
-#include <google/protobuf/text_format.h>
-
-using namespace nzmqt;
 
 namespace qtquickvcp {
 
@@ -109,8 +106,6 @@ MjpegStreamerClient::MjpegStreamerClient(QQuickPaintedItem *parent) :
     m_componentCompleted(false),
     m_framerateTimer(new QTimer(this)),
     m_streamBufferTimer(new QTimer(this)),
-    m_context(nullptr),
-    m_updateSocket(nullptr),
     m_videoUri(""),
     m_running(false),
     m_fps(0.0),
@@ -123,14 +118,6 @@ MjpegStreamerClient::MjpegStreamerClient(QQuickPaintedItem *parent) :
     this->setPerformanceHint(QQuickPaintedItem::FastFBOResizing, true);
     this->setAntialiasing(false);
     this->setOpaquePainting(true);
-
-    connect(m_framerateTimer, &QTimer::timeout,
-            this, &MjpegStreamerClient::updateFramerate);
-    m_framerateTimer->setInterval(1000);
-
-    connect(m_streamBufferTimer, &QTimer::timeout,
-            this, &MjpegStreamerClient::updateStreamBuffer);
-    m_streamBufferTimer->setSingleShot(true);
 }
 
 MjpegStreamerClient::~MjpegStreamerClient()
@@ -204,117 +191,18 @@ void MjpegStreamerClient::stop()
 
 void MjpegStreamerClient::connectSocket()
 {
-    m_context = createDefaultContext(this, 1);
-    m_context->start();
-
-    m_updateSocket = m_context->createSocket(ZMQSocket::TYP_SUB, this);
-    m_updateSocket->setLinger(0);
-    m_updateSocket->connectTo(m_videoUri);
-    m_updateSocket->subscribeTo("frames");
-
-    connect(m_updateSocket, &ZMQSocket::messageReceived,
-         this, &MjpegStreamerClient::updateMessageReceived);
 }
 
 void MjpegStreamerClient::disconnectSocket()
 {
-    if (m_updateSocket != nullptr)
-    {
-        m_updateSocket->close();
-        m_updateSocket->deleteLater();
-        m_updateSocket = nullptr;
-    }
-
-    if (m_context != nullptr)
-    {
-        m_context->stop();
-        m_context->deleteLater();
-        m_context = nullptr;
-    }
 }
 
 void MjpegStreamerClient::updateMessageReceived(const QList<QByteArray> &messageList)
 {
-    QByteArray topic;
-
-    topic = messageList.at(0);
-    m_rx.ParseFromArray(messageList.at(1).data(), messageList.at(1).size());
-
-    m_streamBuffer.clear();
-    m_streamBufferTimer->stop();
-    m_currentStreamBufferItem.timestamp = 0;
-    for (int i = 0; i < m_rx.frame_size(); ++i)
-    {
-        pb::Package_Frame frame;
-        QByteArray data;
-        QDateTime dateTime;
-        QTime time;
-        StreamBufferItem streamBufferItem;
-
-        frame = m_rx.frame(i);
-        data = QByteArray(frame.blob().data(), frame.blob().size());
-
-#ifdef QT_DEBUG
-        qDebug() << "received frame" << topic;
-        qDebug() << "timestamp: " << frame.timestamp_unix() << frame.timestamp_s() << frame.timestamp_us();
-#endif
-
-        streamBufferItem.image = QImage::fromData(data, "JPG");
-        streamBufferItem.timestamp = (double)frame.timestamp_s()*1000 +  (double)frame.timestamp_us() / 1000.0;
-
-        dateTime.setMSecsSinceEpoch((quint64)frame.timestamp_unix()*(quint64)1000);
-        dateTime = dateTime.toLocalTime();
-        time = dateTime.time();
-        streamBufferItem.time = time.addMSecs(frame.timestamp_us()/1000.0);
-
-#ifdef QT_DEBUG
-        qDebug() << "time: " << streamBufferItem.time;
-#endif
-
-        m_streamBuffer.enqueue(streamBufferItem);
-    }
-    m_currentStreamBufferItem = m_streamBuffer.dequeue();
-    updateStreamBuffer();
-}
-
-void MjpegStreamerClient::updateFramerate()
-{
-    m_fps = m_frameCount;
-    m_frameCount = 0;
-    emit fpsChanged(m_fps);
-
-#ifdef QT_DEBUG
-    qDebug() << "fps: " << m_fps;
-#endif
-}
-
-void MjpegStreamerClient::updateStreamBuffer()
-{
-    updateStreamBufferItem();
-
-    if (!m_streamBuffer.isEmpty())
-    {
-        double timestamp;
-        double interval;
-
-        timestamp = m_currentStreamBufferItem.timestamp;
-        m_currentStreamBufferItem = m_streamBuffer.dequeue();
-        interval = m_currentStreamBufferItem.timestamp - timestamp;
-
-        m_streamBufferTimer->start(qMax((int)interval, 0));
-    }
 
 }
 
 void MjpegStreamerClient::updateStreamBufferItem()
 {
-    m_frameCount++;
-    m_frameImg = m_currentStreamBufferItem.image;
-    m_timestamp = m_currentStreamBufferItem.timestamp;
-    m_time = m_currentStreamBufferItem.time;
-
-    update();
-    emit timestampChanged(m_timestamp);
-    emit timeChanged(m_time);
 }
 } // namespace qtquickvcp

@@ -26,21 +26,21 @@
 #include <QQmlListProperty>
 #include <QTemporaryDir>
 #include <memory>
-#include <machinetalk/protobuf/message.pb.h>
-#include <application/configbase.h>
 #include "applicationconfigitem.h"
 #include "applicationconfigfilter.h"
 #include "applicationdescription.h"
 
 namespace qtquickvcp {
 
-class ApplicationConfig : public machinetalk::application::ConfigBase
+class ApplicationConfig : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(bool synced READ isSynced NOTIFY syncedChanged)
     Q_PROPERTY(ApplicationConfigItem *selectedConfig READ selectedConfig NOTIFY selectedConfigChanged)
     Q_PROPERTY(QQmlListProperty<qtquickvcp::ApplicationConfigItem> configs READ configs NOTIFY configsChanged)
     Q_PROPERTY(ApplicationConfigFilter *filter READ filter WRITE setFilter NOTIFY filterChanged)
+    Q_PROPERTY(QString configUri READ configUri WRITE setConfigUri NOTIFY configUriChanged)
+    Q_PROPERTY(bool ready READ ready WRITE setReady NOTIFY readyChanged)
 
 public:
     explicit ApplicationConfig(QObject *parent = 0);
@@ -74,6 +74,16 @@ public:
         return m_configs.at(index);
     }
 
+    QString configUri() const
+    {
+        return m_configUri;
+    }
+
+    bool ready() const
+    {
+        return m_ready;
+    }
+
 public slots:
     void setSelectedConfig(ApplicationConfigItem * arg)
     {
@@ -95,6 +105,24 @@ public slots:
     void selectConfig(const QString &name);
     void unselectConfig();
 
+    void setConfigUri(QString configUri)
+    {
+        if (m_configUri == configUri)
+            return;
+
+        m_configUri = configUri;
+        emit configUriChanged(m_configUri);
+    }
+
+    void setReady(bool ready)
+    {
+        if (m_ready == ready)
+            return;
+
+        m_ready = ready;
+        emit readyChanged(m_ready);
+    }
+
 private:
     bool m_synced;
 
@@ -103,12 +131,11 @@ private:
     ApplicationConfigFilter *m_filter;
     std::unique_ptr<QTemporaryDir> m_temporaryDir;
 
-    // more efficient to reuse a protobuf Message
-    machinetalk::Container m_tx;
+    QString m_configUri;
+
+    bool m_ready;
 
 private slots:
-    void handleDescribeApplicationMessage(const machinetalk::Container &rx);
-    void handleApplicationDetailMessage(const machinetalk::Container &rx);
     void syncConfig();
     void unsyncConfig();
 
@@ -117,6 +144,10 @@ signals:
     void configsChanged(QQmlListProperty<ApplicationConfigItem> arg);
     void filterChanged(ApplicationConfigFilter * arg);
     void syncedChanged(bool synced);
+    void connectionStateChanged(int state);
+    void configUriChanged(QString configUri);
+    void readyChanged(bool ready);
+
 }; // class ApplicationConfig
 } // namespace qtquickvcp
 
